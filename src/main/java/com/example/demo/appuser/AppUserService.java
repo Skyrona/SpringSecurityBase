@@ -41,11 +41,17 @@ public class AppUserService implements UserDetailsService {
         if (userExists && appUser.isEnabled()) {
             throw new IllegalStateException("Email already taken");
         }
-        
-        String encodedPassword = bCryptPasswordEncoder.encode(appUser.getPassword());
-        appUser.setPassword(encodedPassword);
 
-        appUserRepository.save(appUser);
+        if (userExists && !appUser.isEnabled()) {
+            appUser = (AppUser) loadUserByUsername(appUser.getEmail());
+        }
+
+        if (!userExists) {
+            String encodedPassword = bCryptPasswordEncoder.encode(appUser.getPassword());
+            appUser.setPassword(encodedPassword);
+
+            appUserRepository.save(appUser);
+        }
 
         String token = UUID.randomUUID().toString();
         ConfirmationToken confirmationToken = new ConfirmationToken(
